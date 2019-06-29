@@ -1,0 +1,45 @@
+#include <stdio.h>
+#include "oslib/iic.h"
+#include "oslib/os.h"
+#include "swis.h"
+
+int main(){
+    int Line, Pixel, Color, i;
+    unsigned char rbuffer[64];
+    unsigned char wbuffer[64];
+
+    for(i=0;i<64;i++)
+    {
+       rbuffer[i] = 0;
+       wbuffer[i] = 0;
+    }
+
+    rbuffer[18] = 63;
+    rbuffer[42] = 63;
+
+    for(Line=0;Line<8;Line++)
+    {
+        for(Pixel=0;Pixel<8;Pixel++)
+        {
+           if((Line==1||Line==6)&&(Pixel==1||Pixel==2||Pixel==5))
+           {
+               wbuffer[Line*8+Pixel] = 63;
+           }
+           else if((Line==2||Line==5)&&(Pixel==1||Pixel==5||Pixel==6))
+           {
+              wbuffer[Line*8+Pixel] = 63;
+           }
+           else if((Line==3||Line==4)&&Pixel==6)
+           {
+              wbuffer[Line*8+Pixel] = 63;
+           }
+
+        }
+    }
+    //write white
+    _swi(0x88005, _INR(0,0), &wbuffer);
+    //write Red
+    _swi(0x88000, _INR(0,0), &rbuffer);
+
+    return 0;
+}

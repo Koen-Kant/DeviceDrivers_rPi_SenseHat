@@ -1,0 +1,83 @@
+#include <string.h>
+#include "oslib/wimp.h"
+#include "oslib/os.h"
+#include "oslib/wimpspriteop.h"
+#include "kernel.h"
+#include "swis.h"
+#include "stdio.h"
+#include "unistd.h"
+int main()
+{
+   wimp_t task;
+   wimp_event_no event;
+   int button_press = 0;
+   wimp_block block;
+   int quit = 0;
+   int time = 0;
+   int joy_direction = 0;
+
+   int code_list[3];
+
+    task = wimp_initialise(wimp_VERSION_RO3, "Joystick reporter", NULL, NULL);
+
+    time = os_read_monotonic_time();
+
+    wimp_icon_create ib;
+    ib.w = wimp_ICON_BAR_RIGHT;
+    ib.icon.extent.x0=0;
+    ib.icon.extent.y0=0;
+    ib.icon.extent.x1=68;
+    ib.icon.extent.y1=68;
+    ib.icon.flags = wimp_ICON_SPRITE | (wimp_BUTTON_CLICK<< wimp_ICON_BUTTON_TYPE_SHIFT);
+    strncpy(ib.icon.data.sprite, "application", osspriteop_NAME_LIMIT);
+    wimp_create_icon(&ib);
+
+    os_error error2 = {255, ""};
+
+   while(!quit)
+   {
+      time += 10;
+      event = wimp_poll_idle(0, &block, time, NULL);
+      _swi(0x89000, _INR(0,0), &joy_direction);
+      switch(joy_direction)
+      {
+         case 0: // Nothing
+            sprintf(error2.errmess, "Data is: None");
+            break;
+         case 1: // Right
+            sprintf(error2.errmess, "Data is: Right");
+            break;
+         case 2: // Up
+            sprintf(error2.errmess, "Data is: Up");
+            break;
+         case 4: // Left
+            sprintf(error2.errmess, "Data is: Left");
+            break;
+         case 8: // Press
+            sprintf(error2.errmess, "Data is: Press");
+         case 16: //Down
+            sprintf(error2.errmess, "Data is: Down");
+            break;
+         default:
+            sprintf(error2.errmess, "Data is: Wrong");
+            break;
+      }
+      button_press = wimp_report_error_by_category(&error2, wimp_ERROR_BOX_GIVEN_CATEGORY | (wimp_ERROR_BOX_CATEGORY_INFO << wimp_ERROR_BOX_CATEGORY_SHIFT), "Joystick reporter", "application", wimpspriteop_AREA, "quit, Proceed");
+      if(button_press == 3)
+      {
+         quit = 1;
+      }
+      switch(event)
+      {
+         case wimp_USER_MESSAGE:
+         case wimp_USER_MESSAGE_RECORDED:
+            if(block.message.action == message_QUIT)
+            {
+               quit = 1;
+            }
+            break;
+      }
+   }
+   wimp_close_down(task);
+   return 0;
+}

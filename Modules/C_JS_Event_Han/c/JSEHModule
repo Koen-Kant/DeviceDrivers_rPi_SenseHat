@@ -1,0 +1,137 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include "kernel.h"
+#include "swis.h"
+#include "jsehmodulehdr.h"
+
+#define  JM                     "JSEHModule"
+#define  UNUSED(x)              (x = x)
+
+int read_joystick(void);
+
+_kernel_oserror *jm_swi(int swi_no, _kernel_swi_regs *r, void *private_word)
+{
+    //Function called from the SWI Fucntion
+    UNUSED(private_word);
+    UNUSED(r);
+    UNUSED(swi_no);
+    static _kernel_oserror jm_error = {0x89000, "Unsupported Command"};
+    unsigned char *buffer = 0;
+    buffer = (unsigned char *)r->r[0];
+
+    switch(swi_no)
+    {
+        case 0:
+            buffer[0]=read_joystick();
+            printf("Data was: %d: ",buffer[0]);
+            switch(buffer[0])
+            {
+                case 0:
+                   printf("Nothing\n");
+                   break;
+                case 2:
+                   printf("Up\n");
+                   break;
+                case 1:
+                   printf("Right\n");
+                   break;
+                case 16:
+                   printf("Down\n");
+                   break;
+                case 4:
+                   printf("left\n");
+                   break;
+                case 8:
+                   printf("pres\n");
+                   break;
+            }
+            break;
+       default:
+           return &jm_error;
+    }
+    return 0;
+}
+
+_kernel_oserror *jm_cmd(const char *arg_string, int argc, int cmd_no, void *pw)
+{
+    //Function called from the Command prompt
+    static _kernel_oserror jm_error = {0x88000, "Unsupported Command\n"};
+    unsigned char buffer[64];
+
+    UNUSED(argc);
+    UNUSED(pw);
+    UNUSED(cmd_no);
+    UNUSED(arg_string);
+
+    switch(cmd_no)
+    {
+        case 0:
+            buffer[0]=read_joystick();
+            printf("Data was: %d: ",buffer[0]);
+            switch(buffer[0])
+            {
+                case 0:
+                   printf("Nothing\n");
+                   break;
+                case 2:
+                   printf("Up\n");
+                   break;
+                case 1:
+                   printf("Right\n");
+                   break;
+                case 16:
+                   printf("Down\n");
+                   break;
+                case 4:
+                   printf("left\n");
+                   break;
+                case 8:
+                   printf("pres\n");
+                   break;
+            }
+            break;
+        default:
+           return &jm_error;
+    }
+    return 0;
+}
+
+void jm_service(int service_number, _kernel_swi_regs *r, void *private_word)
+{
+    //Error fucntion
+    UNUSED(r);
+    UNUSED(service_number);
+    UNUSED(private_word);
+    //Pass
+}
+
+_kernel_oserror *jm_initialise(const char *cmd_tail, int podule_base, void *private_word)
+{
+    //Initialize Fucntion
+    UNUSED(cmd_tail);
+    UNUSED(podule_base);
+    UNUSED(private_word);
+    //pass
+    return NULL;
+}
+
+int main(int argc, char *argv[])
+{
+    //Function called when brought to life
+    // pass
+    UNUSED(argc);
+    UNUSED(argv);
+    return 0;
+}
+
+int read_joystick(void)
+{
+   int device = 0x46;
+   unsigned char buffer[2];
+   buffer[0]=0xF2;
+   buffer[1]=0;
+   _swix(0x240, _INR(0,2), (device<<1)+0, buffer, 1);
+   _swix(0x240, _INR(0,2), (device<<1)+1, buffer, 1);
+   return buffer[0]&127;
+}

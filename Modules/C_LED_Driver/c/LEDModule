@@ -1,0 +1,167 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include "kernel.h"
+#include "swis.h"
+#include <string.h>
+#include "ledmodulehdr.h"
+
+
+#define  LM                     "LEDModule"
+#define  UNUSED(x)              (x = x)
+
+
+void write_LED_matrix(unsigned char *buffer, int color);
+
+_kernel_oserror *lm_swi(int swi_no, _kernel_swi_regs *r, void *private_word)
+{
+
+    //Function called from the SWI Fucntion
+    UNUSED(private_word);
+    UNUSED(r);
+    UNUSED(swi_no);
+    int i,t;
+    unsigned char *buffer = 0;
+    buffer = (unsigned char *)r->r[0];
+    static _kernel_oserror lm_error = {0x88000, "Unsupported Command\n"};
+
+    switch(swi_no)
+    {
+      case 0:
+        // Write Red
+        write_LED_matrix(buffer, 0);
+        break;
+      case 1:
+      // Write Green
+        write_LED_matrix(buffer, 1);
+        break;
+      case 2:
+      // Write Blue
+        write_LED_matrix(buffer, 2);
+        break;
+      case 3:
+      // Write Mono
+        t = buffer[0];
+        for(i=0;i<64;i++)
+        {
+           buffer[i] = 63;
+        }
+        write_LED_matrix(buffer, t);
+        break;
+      case 4:
+      //Write Off
+        for(i=0;i<64;i++)
+        {
+           buffer[i] = 0;
+        }
+        write_LED_matrix(buffer, 4);
+        break;
+      case 5:
+      //Wrte White
+        write_LED_matrix(buffer, 4);
+        break;
+      default:
+        return &lm_error;
+    }
+    return 0;
+}
+
+_kernel_oserror *lm_cmd(const char *arg_string, int argc, int cmd_no, void *pw)
+{
+    //Function called from the Command prompt
+    static _kernel_oserror lm_error = {0x88000, "Unsupported Command\n"};
+    const char *s = arg_string;
+    unsigned char buffer[64];
+    UNUSED(argc);
+    UNUSED(pw);
+    UNUSED(cmd_no);
+    int i=0,t=0;
+
+    while(*s >= ' ' || *s == '\t'&&i<64)
+    {
+       if(*s > ' ')
+       {
+          buffer[i] = (char)strtoul(s,0,10);
+          if(buffer[i]>=10){s++;}
+          i++;
+       }
+       s++;
+    }
+
+    switch(cmd_no){
+         case 0:
+             write_LED_matrix(buffer, 0);
+             break;
+         case 1:
+             write_LED_matrix(buffer, 1);
+             break;
+         case 2:
+             write_LED_matrix(buffer, 2);
+             break;
+         case 3:
+             t = buffer[0];
+             for(i=0;i<64;i++){buffer[i]=63;}
+             write_LED_matrix(buffer, t);
+             break;
+         case 4:
+             for(i=0;i<64;i++){buffer[i]=0;}
+             write_LED_matrix(buffer, 4);
+             break;
+         case 5:
+             write_LED_matrix(buffer, 4);
+             break;
+         default:
+             return &lm_error;
+    }
+    return 0;
+}
+
+void lm_service(int service_number, _kernel_swi_regs *r, void *private_word)
+{
+    //Error fucntion
+    UNUSED(r);
+    UNUSED(service_number);
+    UNUSED(private_word);
+    //Pass
+}
+
+_kernel_oserror *lm_initialise(const char *cmd_tail, int podule_base, void *private_word)
+{
+    //Initialize Fucntion
+    UNUSED(cmd_tail);
+    UNUSED(podule_base);
+    UNUSED(private_word);
+    //pass
+    return NULL;
+}
+
+int main(int argc, char *argv[])
+{
+    //Function called when brought to life
+    //Don' t do anything
+    UNUSED(argc);
+    UNUSED(argv);
+    return 0;
+}
+
+void write_LED_matrix(unsigned char *nbuffer, int color)
+{
+   int Line, Color, Pixel;
+   int device = 0x46;
+   unsigned char buffer[2];
+
+   for(Line=0;Line<8;Line++)
+    {
+        for(Color=0;Color<3;Color++)
+        {
+            for(Pixel=0;Pixel<8;Pixel++)
+            {
+                if(Color==color||color==4)
+                {
+                    buffer[0]=Line*24+Color*8+Pixel;
+                    buffer[1]=nbuffer[Line*8+Pixel];
+                    _swix(0x240, _INR(0,2), (device<<1)+0, buffer, 2);
+                }
+            }
+        }
+    }
+}

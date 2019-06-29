@@ -1,0 +1,33 @@
+help-string:  LED_Module 0.00
+
+title-string: LEDModule
+
+initialisation-code: lm_initialise
+
+module-is-runnable:
+
+swi-chunk-base-number: 0x88000
+
+swi-handler-code: lm_swi
+
+service-call-handler: lm_service 4 6 8
+
+command-keyword-table: lm_cmd
+
+  write_red(min-args:64, max-args:64,
+      help-text: "Syntax\twrite_red <integer>\n"),
+
+  write_green(min-args:64, max-args:64,
+      help-text: "Syntax\ttm2 <integer>\n"),
+
+   write_blue(min-args:64, max-args:64,
+      help-text: "Syntax\ttm2 <integer>\n"),
+
+   write_mono(min-args:1, max-args:1,
+      help-text: "Syntax\ttm2 <integer>\n"),
+
+   write_off(min-args:0, max-args:0,
+      help-text: "Syntax\ttm2 <integer>\n"),
+
+   write_white(min-args:64, max-args:64,
+      help-text: "Syntax\ttm2 <integer>\n")

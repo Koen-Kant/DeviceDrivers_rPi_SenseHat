@@ -1,0 +1,18 @@
+help-string:  JSEH_Module 0.00
+
+title-string: JSEHModule
+
+initialisation-code: jm_initialise
+
+module-is-runnable:
+
+swi-chunk-base-number: 0x89000
+
+swi-handler-code: jm_swi
+
+service-call-handler: jm_service 4 6 8
+
+command-keyword-table: jm_cmd
+
+  read_JS_direct(min-args:0, max-args:0,
+      help-text: "Syntax\twrite_red <integer>\n")

@@ -1,0 +1,6 @@
+WimpSlot -Min 16000k
+gcc -c -IOSLib: -o js_eh.o JS_EventHandler.c
+gcc -o JS_EventHandler js_eh.o -LOSLib: -lOSLib32
+
+gcc -c -IOSLib: -o lmt.o LedModuleTest.c
+gcc -o LedModulest lmt.o -LOSLib: -lOSLib32
